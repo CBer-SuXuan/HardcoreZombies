@@ -1,0 +1,16 @@
+name: HardcoreZombies
+version: '${version}'
+
+main: me.suxuan.hardcorezombies.HardcoreZombies
+api-version: '1.21'
+authors:
+  - SuXuan_Dev
+description: A hardcore zombies minigame plugin utilizing Paper Components and PDC.
+depend: [ SlimeArenaAPI ]
+
+load: POSTWORLD
+commands:
+  hzombies:
+    description: 僵尸模式主命令
+    aliases: [ hz ]
+    permission: hardcorezombies.admin
