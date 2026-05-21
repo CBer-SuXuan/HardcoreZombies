@@ -1,5 +1,6 @@
 package me.suxuan.hardcorezombies;
 
+import lombok.Getter;
 import me.suxuan.hardcorezombies.command.HZCommand;
 import me.suxuan.hardcorezombies.config.PluginConfig;
 import me.suxuan.hardcorezombies.core.GameRoomManager;
@@ -17,14 +18,17 @@ import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+@Getter
 public final class HardcoreZombies extends JavaPlugin {
 
+	@Getter
 	private static HardcoreZombies instance;
 
 	private PluginConfig pluginConfig;
 	private GameRoomManager roomManager;
 	private DownedBodyManager downedBodyManager;
 	private ReviveManager reviveManager;
+	private WeaponListener weaponListener;
 
 	@Override
 	public void onEnable() {
@@ -54,7 +58,8 @@ public final class HardcoreZombies extends JavaPlugin {
 			command.setTabCompleter(commandExecutor);
 		}
 
-		getServer().getPluginManager().registerEvents(new WeaponListener(roomManager), this);
+		this.weaponListener = new WeaponListener(roomManager);
+		getServer().getPluginManager().registerEvents(weaponListener, this);
 		getServer().getPluginManager().registerEvents(new EntityDeathListener(roomManager), this);
 		getServer().getPluginManager().registerEvents(
 				new PlayerGameplayListener(roomManager, reviveManager, downedBodyManager),
@@ -76,19 +81,4 @@ public final class HardcoreZombies extends JavaPlugin {
 		getComponentLogger().info(Component.text("HardcoreZombies 插件已卸载。", NamedTextColor.YELLOW));
 	}
 
-	public static HardcoreZombies getInstance() {
-		return instance;
-	}
-
-	public PluginConfig getPluginConfig() {
-		return pluginConfig;
-	}
-
-	public GameRoomManager getRoomManager() {
-		return roomManager;
-	}
-
-	public DownedBodyManager getDownedBodyManager() {
-		return downedBodyManager;
-	}
 }

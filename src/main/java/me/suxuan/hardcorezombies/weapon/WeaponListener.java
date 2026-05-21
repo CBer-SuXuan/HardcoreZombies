@@ -5,6 +5,7 @@ import me.suxuan.hardcorezombies.config.PluginConfig;
 import me.suxuan.hardcorezombies.core.Arena;
 import me.suxuan.hardcorezombies.core.GamePlayer;
 import me.suxuan.hardcorezombies.core.GameRoomManager;
+import me.suxuan.hardcorezombies.core.GameState;
 import me.suxuan.hardcorezombies.utils.PDCHelper;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -50,7 +51,7 @@ public class WeaponListener implements Listener {
 			@Override
 			public void run() {
 				for (Player player : Bukkit.getOnlinePlayers()) {
-					if (reloadTasks.containsKey(player.getUniqueId())) continue;
+					if (reloadTasks.containsKey(player.getUniqueId()) || isCombatBlocked(player)) continue;
 
 					ItemStack item = player.getInventory().getItemInMainHand();
 					if (!PDCHelper.hasMarker(item, PDCHelper.WEAPON_ID_KEY)) continue;
@@ -74,6 +75,7 @@ public class WeaponListener implements Listener {
 	public void onPlayerDropWeapon(PlayerDropItemEvent event) {
 		if (PDCHelper.hasMarker(event.getItemDrop().getItemStack(), PDCHelper.WEAPON_ID_KEY)) {
 			event.setCancelled(true);
+			if (isCombatBlocked(event.getPlayer())) return;
 			attemptReload(event.getPlayer(), event.getItemDrop().getItemStack());
 		}
 	}
@@ -81,6 +83,10 @@ public class WeaponListener implements Listener {
 	@EventHandler
 	public void onPlayerChangeWeapon(PlayerItemHeldEvent event) {
 		Player player = event.getPlayer();
+		if (isCombatBlocked(player)) {
+			event.setCancelled(true);
+			return;
+		}
 
 		if (reloadTasks.containsKey(player.getUniqueId())) {
 			reloadTasks.get(player.getUniqueId()).cancel();
@@ -136,6 +142,7 @@ public class WeaponListener implements Listener {
 		if (!PDCHelper.hasMarker(item, PDCHelper.WEAPON_ID_KEY)) return;
 		event.setCancelled(true);
 
+		if (isCombatBlocked(player)) return;
 		if (reloadTasks.containsKey(player.getUniqueId())) return;
 
 		if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
@@ -155,7 +162,19 @@ public class WeaponListener implements Listener {
 		}
 	}
 
+	public void clearPlayerWeaponState(Player player) {
+		BukkitTask task = reloadTasks.remove(player.getUniqueId());
+		if (task != null) {
+			task.cancel();
+		}
+		shootCooldowns.remove(player.getUniqueId());
+		player.setExp(0f);
+		player.sendActionBar(Component.empty());
+	}
+
 	private void attemptReload(Player player, ItemStack weapon) {
+		if (isCombatBlocked(player)) return;
+
 		Integer currentAmmo = PDCHelper.getInt(weapon, PDCHelper.AMMO_COUNT_KEY);
 		Integer maxAmmo = PDCHelper.getInt(weapon, WeaponFactory.MAX_AMMO_KEY);
 		Integer reserveAmmo = PDCHelper.getInt(weapon, WeaponFactory.RESERVE_AMMO_KEY);
@@ -185,7 +204,7 @@ public class WeaponListener implements Listener {
 
 			@Override
 			public void run() {
-				if (!player.isOnline() || player.isDead()) {
+				if (!player.isOnline() || player.isDead() || isCombatBlocked(player)) {
 					reloadTasks.remove(player.getUniqueId());
 					this.cancel();
 					return;
@@ -236,6 +255,8 @@ public class WeaponListener implements Listener {
 	}
 
 	private void handleShooting(Player player, ItemStack item) {
+		if (isCombatBlocked(player)) return;
+
 		Integer currentAmmo = PDCHelper.getInt(item, PDCHelper.AMMO_COUNT_KEY);
 		Integer damage = PDCHelper.getInt(item, WeaponFactory.DAMAGE_KEY);
 		Integer reserveAmmo = PDCHelper.getInt(item, WeaponFactory.RESERVE_AMMO_KEY); // 修复了拼写错误
@@ -430,6 +451,15 @@ public class WeaponListener implements Listener {
 		}
 		PluginConfig config = HardcoreZombies.getInstance().getPluginConfig();
 		return config.getHeadshotDamageMultiplier();
+	}
+
+	private boolean isCombatBlocked(Player player) {
+		Arena arena = roomManager.getPlayerArena(player);
+		if (arena == null || arena.getState() != GameState.IN_GAME) {
+			return false;
+		}
+		GamePlayer gp = arena.getGamePlayer(player);
+		return gp != null && (gp.isDowned() || gp.isDead());
 	}
 
 	private boolean isHeadshot(RayTraceResult result, Entity target) {

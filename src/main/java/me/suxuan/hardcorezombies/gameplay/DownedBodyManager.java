@@ -2,7 +2,9 @@ package me.suxuan.hardcorezombies.gameplay;
 
 import io.papermc.paper.datacomponent.item.ResolvableProfile;
 import me.suxuan.hardcorezombies.HardcoreZombies;
+import me.suxuan.hardcorezombies.core.Arena;
 import me.suxuan.hardcorezombies.core.GamePlayer;
+import me.suxuan.hardcorezombies.core.GameState;
 import me.suxuan.hardcorezombies.utils.PDCHelper;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -73,6 +75,10 @@ public class DownedBodyManager {
 				computeCameraPosition(body),
 				savedAttributes
 		));
+
+		HardcoreZombies.getInstance().getRoomManager().getCollisionManager()
+				.onPlayerDowned(player, gamePlayer.getArena());
+		HardcoreZombies.getInstance().getWeaponListener().clearPlayerWeaponState(player);
 	}
 
 	public void remove(GamePlayer gamePlayer) {
@@ -84,7 +90,12 @@ public class DownedBodyManager {
 			session.savedAttributes().restore(player);
 			player.setInvisible(false);
 			player.setVelocity(new org.bukkit.util.Vector(0, 0, 0));
-			HardcoreZombies.getInstance().getRoomManager().getCollisionManager().refreshPlayer(player);
+			Arena arena = gamePlayer.getArena();
+			if (arena.getState() == GameState.IN_GAME) {
+				HardcoreZombies.getInstance().getRoomManager().getCollisionManager().applyArena(arena);
+			} else {
+				HardcoreZombies.getInstance().getRoomManager().getCollisionManager().refreshPlayer(player);
+			}
 		}
 
 		LivingEntity body = getBody(session.bodyUuid());
