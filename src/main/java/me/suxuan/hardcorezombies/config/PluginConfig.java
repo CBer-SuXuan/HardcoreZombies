@@ -1,5 +1,6 @@
 package me.suxuan.hardcorezombies.config;
 
+import lombok.Getter;
 import me.suxuan.hardcorezombies.HardcoreZombies;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Getter
 public class PluginConfig {
 
 	private final HardcoreZombies plugin;
@@ -33,6 +35,8 @@ public class PluginConfig {
 	private int perWaveSurvived;
 	private int perKill;
 	private double headshotDamageMultiplier;
+	private boolean npcJoinOnly;
+	private String autoJoinTemplate;
 
 	private final Map<String, List<Vector>> templateSpawnOffsets = new HashMap<>();
 
@@ -74,6 +78,11 @@ public class PluginConfig {
 		perWaveSurvived = config.getInt("rewards.per-wave-survived", 50);
 		perKill = config.getInt("rewards.per-kill", 10);
 		headshotDamageMultiplier = config.getDouble("combat.headshot-damage-multiplier", 1.5);
+		npcJoinOnly = config.getBoolean("join.npc-only", true);
+		autoJoinTemplate = config.getString("join.template", "void");
+		if (autoJoinTemplate == null || autoJoinTemplate.isBlank()) {
+			autoJoinTemplate = "void";
+		}
 
 		templateSpawnOffsets.clear();
 		ConfigurationSection templates = config.getConfigurationSection("templates");
@@ -94,7 +103,7 @@ public class PluginConfig {
 
 	public void addSpawnOffset(String template, Vector offset) {
 		String key = template.toLowerCase();
-		templateSpawnOffsets.computeIfAbsent(key, k -> new ArrayList<>()).add(offset);
+		templateSpawnOffsets.computeIfAbsent(key, _ -> new ArrayList<>()).add(offset);
 
 		List<String> serialized = templateSpawnOffsets.get(key).stream()
 				.map(v -> v.getBlockX() + "," + v.getBlockY() + "," + v.getBlockZ())
@@ -125,59 +134,8 @@ public class PluginConfig {
 		return lobbyLocation.clone();
 	}
 
-	public int getMinPlayers() {
-		return minPlayers;
-	}
-
-	public int getMaxPlayers() {
-		return maxPlayers;
-	}
-
-	public int getStartCountdownSeconds() {
-		return startCountdownSeconds;
-	}
-
-	public int getBetweenWavesSeconds() {
-		return betweenWavesSeconds;
-	}
-
-	public int getVictoryWave() {
-		return victoryWave;
-	}
-
-	public int getEndDelaySeconds() {
-		return endDelaySeconds;
-	}
-
-	public int getMaxAliveZombies() {
-		return maxAliveZombies;
-	}
-
-	public int getDownedBleedSeconds() {
-		return downedBleedSeconds;
-	}
-
-	public int getReviveChannelTicks() {
-		return reviveChannelTicks;
-	}
-
 	public double getReviveRangeSquared() {
 		return reviveRange * reviveRange;
 	}
 
-	public int getVictoryBonus() {
-		return victoryBonus;
-	}
-
-	public int getPerWaveSurvived() {
-		return perWaveSurvived;
-	}
-
-	public int getPerKill() {
-		return perKill;
-	}
-
-	public double getHeadshotDamageMultiplier() {
-		return headshotDamageMultiplier;
-	}
 }

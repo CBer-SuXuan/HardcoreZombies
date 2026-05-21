@@ -6,7 +6,7 @@ api-version: '1.21'
 authors:
   - SuXuan_Dev
 description: A hardcore zombies minigame plugin utilizing Paper Components and PDC.
-depend: [ SlimeArenaAPI ]
+depend: [ SlimeArenaAPI, Citizens ]
 
 load: POSTWORLD
 commands:
@@ -19,5 +19,5 @@ permissions:
     description: 创建/销毁房间、强制开始、配置刷怪点
     default: op
   hardcorezombies.play:
-    description: 加入、离开、查看房间列表
+    description: 加入、离开、查看房间列表（加入通常由 NPC 触发）
     default: true

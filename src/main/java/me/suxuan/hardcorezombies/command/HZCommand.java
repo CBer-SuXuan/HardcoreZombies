@@ -11,6 +11,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.metadata.MetadataValue;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +24,8 @@ public class HZCommand implements CommandExecutor, TabCompleter {
 
 	private static final String PERM_ADMIN = "hardcorezombies.admin";
 	private static final String PERM_PLAY = "hardcorezombies.play";
+	private static final long NPC_JOIN_MARKER_TTL_MS = 2500L;
+	public static final String NPC_JOIN_MARKER = "hz_npc_join_marker";
 
 	private final HardcoreZombies plugin;
 	private final GameRoomManager gameRoomManager;
@@ -78,17 +82,28 @@ public class HZCommand implements CommandExecutor, TabCompleter {
 			player.sendMessage(Component.text("你没有权限执行此操作。", NamedTextColor.RED));
 			return;
 		}
-		if (args.length < 2) {
-			player.sendMessage(Component.text("用法: /hz join <房间ID>", NamedTextColor.RED));
+
+		if (args.length >= 2) {
+			if (!player.hasPermission(PERM_ADMIN)) {
+				player.sendMessage(Component.text("该用法仅管理员可用。", NamedTextColor.RED));
+				return;
+			}
+
+			Arena arena = gameRoomManager.getRoom(args[1]);
+			if (arena == null) {
+				player.sendMessage(Component.text("找不到该房间或房间仍在加载中！", NamedTextColor.RED));
+				return;
+			}
+			arena.addPlayer(player);
 			return;
 		}
 
-		Arena arena = gameRoomManager.getRoom(args[1]);
-		if (arena == null) {
-			player.sendMessage(Component.text("找不到该房间或房间仍在加载中！", NamedTextColor.RED));
+		if (plugin.getPluginConfig().isNpcJoinOnly() && !consumeNpcJoinMarker(player)) {
+			player.sendMessage(Component.text("请通过大厅 NPC 右键加入游戏。", NamedTextColor.RED));
 			return;
 		}
-		arena.addPlayer(player);
+
+		gameRoomManager.quickJoin(player, plugin.getPluginConfig().getAutoJoinTemplate());
 	}
 
 	private void handleLeave(Player player) {
@@ -190,9 +205,9 @@ public class HZCommand implements CommandExecutor, TabCompleter {
 
 	private void sendUsage(Player player) {
 		player.sendMessage(Component.text("用法: /hz <子指令>", NamedTextColor.YELLOW));
-		player.sendMessage(Component.text("  create [模板] | join <ID> | leave | list", NamedTextColor.GRAY));
+		player.sendMessage(Component.text("  join | leave | list", NamedTextColor.GRAY));
 		if (player.hasPermission(PERM_ADMIN)) {
-			player.sendMessage(Component.text("  start | delete <ID> | addsnode", NamedTextColor.GRAY));
+			player.sendMessage(Component.text("  create [模板] | join <ID> | start | delete <ID> | addsnode", NamedTextColor.GRAY));
 		}
 	}
 
@@ -210,8 +225,32 @@ public class HZCommand implements CommandExecutor, TabCompleter {
 				completions.add("addsnode");
 			}
 		} else if (args.length == 2 && (args[0].equalsIgnoreCase("join") || args[0].equalsIgnoreCase("delete"))) {
+			if (args[0].equalsIgnoreCase("join") && !sender.hasPermission(PERM_ADMIN)) {
+				return completions;
+			}
 			completions.addAll(gameRoomManager.getActiveRoomIds());
 		}
 		return completions;
+	}
+
+	private boolean consumeNpcJoinMarker(Player player) {
+		if (!player.hasMetadata(NPC_JOIN_MARKER)) {
+			return false;
+		}
+		boolean valid = false;
+		for (MetadataValue value : player.getMetadata(NPC_JOIN_MARKER)) {
+			if (value.getOwningPlugin() != plugin) continue;
+			long markedAt = value.asLong();
+			if (System.currentTimeMillis() - markedAt <= NPC_JOIN_MARKER_TTL_MS) {
+				valid = true;
+				break;
+			}
+		}
+		player.removeMetadata(NPC_JOIN_MARKER, plugin);
+		return valid;
+	}
+
+	public void markNpcJoin(Player player) {
+		player.setMetadata(NPC_JOIN_MARKER, new FixedMetadataValue(plugin, System.currentTimeMillis()));
 	}
 }

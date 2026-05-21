@@ -1,6 +1,7 @@
 package me.suxuan.hardcorezombies.core;
 
 import me.suxuan.hardcorezombies.HardcoreZombies;
+import me.suxuan.hardcorezombies.config.PluginConfig;
 import me.suxuan.hardcorezombies.gameplay.PlayerCollisionManager;
 import me.suxuan.hardcorezombies.utils.PDCHelper;
 import me.suxuan.slimearena.api.ArenaManager;
@@ -15,6 +16,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import java.util.Map;
+import java.util.Comparator;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -130,6 +132,43 @@ public class GameRoomManager {
 			}
 		}
 		return null;
+	}
+
+	public void quickJoin(Player player, String templateName) {
+		Arena current = getPlayerArena(player);
+		if (current != null) {
+			player.sendMessage(Component.text(
+					"你已经在房间 " + current.getArenaId() + " 中了。",
+					NamedTextColor.YELLOW
+			));
+			return;
+		}
+
+		PluginConfig config = plugin.getPluginConfig();
+		Arena joinable = activeRooms.values().stream()
+				.filter(arena -> arena.getState() == GameState.WAITING || arena.getState() == GameState.STARTING)
+				.filter(arena -> arena.getGamePlayers().size() < config.getMaxPlayers())
+				.max(Comparator.comparingInt(arena -> arena.getGamePlayers().size()))
+				.orElse(null);
+
+		if (joinable != null) {
+			joinable.addPlayer(player);
+			return;
+		}
+
+		player.sendMessage(Component.text("当前没有可加入房间，正在为你创建新房间...", NamedTextColor.YELLOW));
+		createRoom(templateName, roomId -> {
+			Player online = Bukkit.getPlayer(player.getUniqueId());
+			if (online == null || !online.isOnline()) {
+				return;
+			}
+			Arena created = getRoom(roomId);
+			if (created == null) {
+				online.sendMessage(Component.text("房间创建失败，请稍后重试。", NamedTextColor.RED));
+				return;
+			}
+			created.addPlayer(online);
+		});
 	}
 
 	public boolean isInGameWorld(Player player) {

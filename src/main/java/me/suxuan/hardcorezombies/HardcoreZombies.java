@@ -7,6 +7,7 @@ import me.suxuan.hardcorezombies.gameplay.DownedBodyManager;
 import me.suxuan.hardcorezombies.gameplay.ReviveManager;
 import me.suxuan.hardcorezombies.listener.ArenaProtectionListener;
 import me.suxuan.hardcorezombies.listener.EntityDeathListener;
+import me.suxuan.hardcorezombies.listener.NpcJoinListener;
 import me.suxuan.hardcorezombies.listener.PlayerGameplayListener;
 import me.suxuan.hardcorezombies.weapon.WeaponListener;
 import me.suxuan.slimearena.api.ArenaManager;
@@ -60,6 +61,7 @@ public final class HardcoreZombies extends JavaPlugin {
 				this
 		);
 		getServer().getPluginManager().registerEvents(new ArenaProtectionListener(roomManager), this);
+		getServer().getPluginManager().registerEvents(new NpcJoinListener(commandExecutor), this);
 
 		getComponentLogger().info(Component.text("HardcoreZombies 插件已启动！", NamedTextColor.GREEN));
 	}

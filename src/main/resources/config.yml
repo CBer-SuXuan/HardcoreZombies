@@ -19,6 +19,12 @@ game:
   revive-channel-ticks: 40
   revive-range: 4.0
 
+join:
+  # true 时，玩家只能通过 Citizens NPC 右键触发 /hz join 入场
+  npc-only: true
+  # 没有可加入房间时，自动创建的新房间模板名
+  template: void
+
 combat:
   # 爆头额外伤害倍率（1.5 = 爆头时伤害 x1.5）
   headshot-damage-multiplier: 1.5

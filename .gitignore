@@ -3,3 +3,4 @@ HardcoreZombies.iml
 build.xml
 /server
 /target
+dependency-reduced-pom.xml

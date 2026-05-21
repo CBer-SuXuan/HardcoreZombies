@@ -27,6 +27,7 @@ import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
 import java.util.Map;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -391,11 +392,27 @@ public class WeaponListener implements Listener {
 
 	private Sound parseSound(String soundName, Sound defaultSound) {
 		if (soundName == null || soundName.isEmpty()) return defaultSound;
-		try {
-			return Sound.valueOf(soundName.toUpperCase());
-		} catch (IllegalArgumentException e) {
-			return defaultSound; // 如果拼写错误，回退到默认音效
+		String normalized = soundName.trim();
+
+		String lowered = normalized.toLowerCase(Locale.ROOT);
+		NamespacedKey key = NamespacedKey.fromString(lowered);
+		if (key != null) {
+			Sound sound = Registry.SOUNDS.get(key);
+			if (sound != null) {
+				return sound;
+			}
 		}
+
+		// 兼容旧格式（如 ENTITY_ZOMBIE_AMBIENT）=> entity.zombie.ambient
+		if (!lowered.contains(":")) {
+			NamespacedKey legacyKey = NamespacedKey.minecraft(lowered.replace('_', '.'));
+			Sound legacySound = Registry.SOUNDS.get(legacyKey);
+			if (legacySound != null) {
+				return legacySound;
+			}
+		}
+
+		return defaultSound; // 如果拼写错误，回退到默认音效
 	}
 
 	private void drawBulletTrail(Location start, Vector direction, double distance, Color color) {

@@ -20,6 +20,13 @@
         <configuration>
           <source>${java.version}</source>
           <target>${java.version}</target>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.projectlombok</groupId>
+              <artifactId>lombok</artifactId>
+              <version>${lombok.version}</version>
+            </path>
+          </annotationProcessorPaths>
         </configuration>
       </plugin>
       <plugin>
@@ -45,6 +52,11 @@
       <id>is-releases</id>
       <url>https://repo.infernalsuite.com/repository/maven-releases/</url>
     </repository>
+    <repository>
+      <id>citizens-repo</id>
+      <name>Citizens Repository</name>
+      <url>https://maven.citizensnpcs.co/repo</url>
+    </repository>
   </repositories>
   <dependencies>
     <dependency>
@@ -53,8 +65,21 @@
       <version>1.21.11-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>net.citizensnpcs</groupId>
+      <artifactId>citizens-main</artifactId>
+      <version>2.0.41-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.42</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
   <properties>
+    <lombok.version>1.18.42</lombok.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>25</java.version>
   </properties>
