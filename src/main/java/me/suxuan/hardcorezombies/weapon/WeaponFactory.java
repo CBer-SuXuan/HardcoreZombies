@@ -32,6 +32,7 @@ public class WeaponFactory {
 
 	public static final NamespacedKey COIN_HIT_KEY = new NamespacedKey(HardcoreZombies.getInstance(), "coin_hit"); // 普通命中金币
 	public static final NamespacedKey COIN_HEADSHOT_KEY = new NamespacedKey(HardcoreZombies.getInstance(), "coin_headshot"); // 爆头命中金币
+	public static final NamespacedKey HEADSHOT_DAMAGE_MULT_KEY = new NamespacedKey(HardcoreZombies.getInstance(), "headshot_damage_mult");
 
 	public static ItemStack createM4A1() {
 		return new WeaponBuilder("m4a1", "M4A1 突击步枪", Material.IRON_HOE)
@@ -44,6 +45,7 @@ public class WeaponFactory {
 				.particleRGB("255,255,200")
 				.reload(40, "ITEM_FLINTANDSTEEL_USE", "BLOCK_IRON_DOOR_CLOSE")
 				.coins(8, 10)
+				.headshotMultiplier(1.5)
 				.build();
 	}
 
@@ -60,6 +62,7 @@ public class WeaponFactory {
 				.trait("fire")
 				.reload(60, "BLOCK_WOODEN_DOOR_OPEN", "BLOCK_WOODEN_TRAPDOOR_CLOSE")
 				.coins(10, 15)
+				.headshotMultiplier(1.25)
 				.build();
 	}
 
@@ -73,6 +76,7 @@ public class WeaponFactory {
 				.spread(0.01)
 				.reload(20, "BLOCK_WOODEN_DOOR_OPEN", "BLOCK_WOODEN_TRAPDOOR_CLOSE")
 				.coins(15, 20)
+				.headshotMultiplier(2.0)
 				.build();
 	}
 
@@ -97,6 +101,7 @@ public class WeaponFactory {
 		private String reloadFinishSound = "BLOCK_IRON_DOOR_CLOSE";
 		private int coinHit = 10;
 		private int coinHeadshot = 20;
+		private double headshotDamageMult = -1;
 
 		public WeaponBuilder(String id, String displayName, Material material) {
 			this.id = id;
@@ -163,6 +168,11 @@ public class WeaponFactory {
 			return this;
 		}
 
+		public WeaponBuilder headshotMultiplier(double multiplier) {
+			this.headshotDamageMult = multiplier;
+			return this;
+		}
+
 		/**
 		 * 最终构建并封装全部 PDC 数据
 		 */
@@ -206,6 +216,11 @@ public class WeaponFactory {
 
 			item = PDCHelper.setInt(item, COIN_HIT_KEY, coinHit);
 			item = PDCHelper.setInt(item, COIN_HEADSHOT_KEY, coinHeadshot);
+
+			double headshotMult = headshotDamageMult > 0
+					? headshotDamageMult
+					: HardcoreZombies.getInstance().getPluginConfig().getHeadshotDamageMultiplier();
+			item = PDCHelper.setDouble(item, HEADSHOT_DAMAGE_MULT_KEY, headshotMult);
 
 			item.setAmount(Math.max(1, maxAmmo));
 

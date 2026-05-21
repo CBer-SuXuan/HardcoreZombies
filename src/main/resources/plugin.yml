@@ -13,4 +13,11 @@ commands:
   hzombies:
     description: 僵尸模式主命令
     aliases: [ hz ]
-    permission: hardcorezombies.admin
+
+permissions:
+  hardcorezombies.admin:
+    description: 创建/销毁房间、强制开始、配置刷怪点
+    default: op
+  hardcorezombies.play:
+    description: 加入、离开、查看房间列表
+    default: true

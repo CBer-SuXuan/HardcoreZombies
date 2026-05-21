@@ -1,8 +1,13 @@
 package me.suxuan.hardcorezombies;
 
 import me.suxuan.hardcorezombies.command.HZCommand;
+import me.suxuan.hardcorezombies.config.PluginConfig;
 import me.suxuan.hardcorezombies.core.GameRoomManager;
+import me.suxuan.hardcorezombies.gameplay.DownedBodyManager;
+import me.suxuan.hardcorezombies.gameplay.ReviveManager;
+import me.suxuan.hardcorezombies.listener.ArenaProtectionListener;
 import me.suxuan.hardcorezombies.listener.EntityDeathListener;
+import me.suxuan.hardcorezombies.listener.PlayerGameplayListener;
 import me.suxuan.hardcorezombies.weapon.WeaponListener;
 import me.suxuan.slimearena.api.ArenaManager;
 import net.kyori.adventure.text.Component;
@@ -14,11 +19,17 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class HardcoreZombies extends JavaPlugin {
 
 	private static HardcoreZombies instance;
+
+	private PluginConfig pluginConfig;
 	private GameRoomManager roomManager;
+	private DownedBodyManager downedBodyManager;
+	private ReviveManager reviveManager;
 
 	@Override
 	public void onEnable() {
 		instance = this;
+		this.pluginConfig = new PluginConfig(this);
+		pluginConfig.load();
 
 		RegisteredServiceProvider<ArenaManager> provider = getServer().getServicesManager().getRegistration(ArenaManager.class);
 		ArenaManager slimeArenaManager;
@@ -32,6 +43,8 @@ public final class HardcoreZombies extends JavaPlugin {
 		}
 
 		this.roomManager = new GameRoomManager(this, slimeArenaManager);
+		this.downedBodyManager = new DownedBodyManager();
+		this.reviveManager = new ReviveManager(this, roomManager, downedBodyManager);
 
 		HZCommand commandExecutor = new HZCommand(this, roomManager);
 		PluginCommand command = getCommand("hzombies");
@@ -42,13 +55,17 @@ public final class HardcoreZombies extends JavaPlugin {
 
 		getServer().getPluginManager().registerEvents(new WeaponListener(roomManager), this);
 		getServer().getPluginManager().registerEvents(new EntityDeathListener(roomManager), this);
+		getServer().getPluginManager().registerEvents(
+				new PlayerGameplayListener(roomManager, reviveManager, downedBodyManager),
+				this
+		);
+		getServer().getPluginManager().registerEvents(new ArenaProtectionListener(roomManager), this);
 
 		getComponentLogger().info(Component.text("HardcoreZombies 插件已启动！", NamedTextColor.GREEN));
 	}
 
 	@Override
 	public void onDisable() {
-		// 游戏卸载时，清理所有房间
 		if (roomManager != null) {
 			for (String arenaId : roomManager.getActiveRoomIds()) {
 				roomManager.destroyRoom(arenaId);
@@ -59,5 +76,17 @@ public final class HardcoreZombies extends JavaPlugin {
 
 	public static HardcoreZombies getInstance() {
 		return instance;
+	}
+
+	public PluginConfig getPluginConfig() {
+		return pluginConfig;
+	}
+
+	public GameRoomManager getRoomManager() {
+		return roomManager;
+	}
+
+	public DownedBodyManager getDownedBodyManager() {
+		return downedBodyManager;
 	}
 }

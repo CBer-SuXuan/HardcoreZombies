@@ -1,6 +1,7 @@
 package me.suxuan.hardcorezombies.weapon;
 
 import me.suxuan.hardcorezombies.HardcoreZombies;
+import me.suxuan.hardcorezombies.config.PluginConfig;
 import me.suxuan.hardcorezombies.core.Arena;
 import me.suxuan.hardcorezombies.core.GamePlayer;
 import me.suxuan.hardcorezombies.core.GameRoomManager;
@@ -9,6 +10,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.*;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -297,11 +299,20 @@ public class WeaponListener implements Listener {
 			drawBulletTrail(eyeLoc, direction, distance, particleColor);
 
 			if (rayTraceResult != null && rayTraceResult.getHitEntity() instanceof org.bukkit.entity.Damageable target) {
+				if (roomManager.isFriendlyCombatTarget(player, target)) {
+					continue;
+				}
+
 				double finalDamage = damage;
 				boolean isHeadshot = isHeadshot(rayTraceResult, target);
 				if (isHeadshot) {
-					finalDamage *= 1.5;
+					double headshotMult = resolveHeadshotMultiplier(item);
+					finalDamage *= headshotMult;
 					player.playSound(player.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 1.0f, 1.0f);
+					player.sendActionBar(Component.text(
+							"爆头! x" + String.format("%.1f", headshotMult) + " (" + (int) Math.ceil(finalDamage) + " 伤害)",
+							NamedTextColor.GOLD
+					));
 				}
 
 				if ("fire".equals(trait)) {
@@ -395,9 +406,23 @@ public class WeaponListener implements Listener {
 		}
 	}
 
+	private double resolveHeadshotMultiplier(ItemStack item) {
+		Double weaponMult = PDCHelper.getDouble(item, WeaponFactory.HEADSHOT_DAMAGE_MULT_KEY);
+		if (weaponMult != null && weaponMult > 0) {
+			return weaponMult;
+		}
+		PluginConfig config = HardcoreZombies.getInstance().getPluginConfig();
+		return config.getHeadshotDamageMultiplier();
+	}
+
 	private boolean isHeadshot(RayTraceResult result, Entity target) {
 		double hitY = result.getHitPosition().getY();
-		double headY = target.getLocation().getY() + (target.getHeight() * 0.85);
-		return hitY >= headY;
+		double headThreshold;
+		if (target instanceof LivingEntity living) {
+			headThreshold = living.getEyeLocation().getY() - 0.15;
+		} else {
+			headThreshold = target.getLocation().getY() + target.getHeight() * 0.75;
+		}
+		return hitY >= headThreshold;
 	}
 }

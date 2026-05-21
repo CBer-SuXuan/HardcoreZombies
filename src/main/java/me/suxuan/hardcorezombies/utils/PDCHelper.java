@@ -16,6 +16,7 @@ public class PDCHelper {
 	public static final NamespacedKey AMMO_COUNT_KEY = new NamespacedKey(HardcoreZombies.getInstance(), "ammo_count");
 	public static final NamespacedKey ITEM_MARKER_KEY = new NamespacedKey(HardcoreZombies.getInstance(), "hz_item");
 	public static final NamespacedKey ARENA_ID_KEY = new NamespacedKey(HardcoreZombies.getInstance(), "arena_id");
+	public static final NamespacedKey DOWNED_BODY_KEY = new NamespacedKey(HardcoreZombies.getInstance(), "downed_body");
 
 	/**
 	 * 为物品写入字符串类型的数据

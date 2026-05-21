@@ -1,0 +1,33 @@
+# 大厅传送点（游戏结束 / 离开房间时送回此处）
+lobby:
+  world: world
+  x: 0.5
+  y: 64.0
+  z: 0.5
+  yaw: 0.0
+  pitch: 0.0
+
+game:
+  min-players: 1
+  max-players: 4
+  start-countdown-seconds: 10
+  between-waves-seconds: 10
+  victory-wave: 30
+  end-delay-seconds: 8
+  max-alive-zombies: 30
+  downed-bleed-seconds: 30
+  revive-channel-ticks: 40
+  revive-range: 4.0
+
+combat:
+  # 爆头额外伤害倍率（1.5 = 爆头时伤害 x1.5）
+  headshot-damage-multiplier: 1.5
+
+rewards:
+  victory-bonus: 500
+  per-wave-survived: 50
+  per-kill: 10
+
+# 各 ASWM 模板刷怪点：相对该实例世界出生点的偏移 (x,y,z)
+# 可用 /hz addsnode 在房间内追加
+templates: {}
